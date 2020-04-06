@@ -23,28 +23,32 @@ import org.apache.hadoop.fs.{ FileAlreadyExistsException, FileSystem, Path }
 import org.apache.spark.SparkContext
 import org.bdgenomics.adam.rdd.ADAMContext._
 import org.bdgenomics.adam.rdd.ADAMSaveAnyArgs
-import org.bdgenomics.cannoli.{ Bowtie2 => Bowtie2Fn, Bowtie2Args => Bowtie2FnArgs }
+import org.bdgenomics.adam.util.FileExtensions._
+import org.bdgenomics.cannoli.{ DeepVariant => DeepVariantFn, DeepVariantArgs => DeepVariantFnArgs }
 import org.bdgenomics.utils.cli._
 import org.kohsuke.args4j.{ Argument, Option => Args4jOption }
 
-object Bowtie2 extends BDGCommandCompanion {
-  val commandName = "bowtie2"
-  val commandDescription = "Align paired-end reads in a fragment dataset with Bowtie 2."
+object DeepVariant extends BDGCommandCompanion {
+  val commandName = "deepvariant"
+  val commandDescription = "Call variants from an alignment dataset with DeepVariant."
 
   def apply(cmdLine: Array[String]) = {
-    new Bowtie2(Args4j[Bowtie2Args](cmdLine))
+    new DeepVariant(Args4j[DeepVariantArgs](cmdLine))
   }
 }
 
 /**
- * Bowtie 2 command line arguments.
+ * DeepVariant command line arguments.
  */
-class Bowtie2Args extends Bowtie2FnArgs with ADAMSaveAnyArgs with ParquetArgs {
-  @Argument(required = true, metaVar = "INPUT", usage = "Location to pipe fragments from (e.g. interleaved FASTQ format, .ifq). If extension is not detected, Parquet is assumed.", index = 0)
+class DeepVariantArgs extends DeepVariantFnArgs with ADAMSaveAnyArgs with ParquetArgs {
+  @Argument(required = true, metaVar = "INPUT", usage = "Location to pipe alignment records from (e.g. .bam, .cram, .sam). If extension is not detected, Parquet is assumed.", index = 0)
   var inputPath: String = _
 
-  @Argument(required = true, metaVar = "OUTPUT", usage = "Location to pipe alignments to (e.g. .bam, .cram, .sam). If extension is not detected, Parquet is assumed.", index = 1)
+  @Argument(required = true, metaVar = "OUTPUT", usage = "Location to pipe variant contexts to (e.g. .vcf, .vcf.gz, .vcf.bgz). If extension is not detected, Parquet is assumed.", index = 1)
   var outputPath: String = _
+
+  @Args4jOption(required = false, name = "-repartition", usage = "repartition the input file.")
+  var repartition: Int = 500
 
   @Args4jOption(required = false, name = "-single", usage = "Saves OUTPUT as single file.")
   var asSingleFile: Boolean = false
@@ -63,10 +67,10 @@ class Bowtie2Args extends Bowtie2FnArgs with ADAMSaveAnyArgs with ParquetArgs {
 }
 
 /**
- * Bowtie 2 command line wrapper.
+ * DeepVariant command line wrapper.
  */
-class Bowtie2(protected val args: Bowtie2Args) extends BDGSparkCommand[Bowtie2Args] with Logging {
-  val companion = Bowtie2
+class DeepVariant(protected val args: DeepVariantArgs) extends BDGSparkCommand[DeepVariantArgs] with Logging {
+  val companion = DeepVariant
   val stringency: ValidationStringency = ValidationStringency.valueOf(args.stringency)
 
   def run(sc: SparkContext) {
@@ -75,8 +79,19 @@ class Bowtie2(protected val args: Bowtie2Args) extends BDGSparkCommand[Bowtie2Ar
       throw new FileAlreadyExistsException(s"${args.outputPath} already exists on HDFS")
     }
 
-    val fragments = sc.loadFragments(args.inputPath, stringency = stringency)
-    val alignments = new Bowtie2Fn(args, sc).apply(fragments)
-    alignments.save(args)
+    val alignments = sc.loadAlignments(args.inputPath, stringency = stringency).transform(rdd => rdd.repartition(args.repartition))
+    val variantContexts = new DeepVariantFn(args, stringency, sc).apply(alignments)
+
+    if (isVcfExt(args.outputPath)) {
+      variantContexts.saveAsVcf(
+        args.outputPath,
+        asSingleFile = args.asSingleFile,
+        deferMerging = args.deferMerging,
+        disableFastConcat = args.disableFastConcat,
+        stringency
+      )
+    } else {
+      variantContexts.saveAsParquet(args)
+    }
   }
 }

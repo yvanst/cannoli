@@ -19,6 +19,7 @@ package org.bdgenomics.cannoli.cli
 
 import grizzled.slf4j.Logging
 import htsjdk.samtools.ValidationStringency
+import org.apache.hadoop.fs.{ FileAlreadyExistsException, FileSystem, Path }
 import org.apache.spark.SparkContext
 import org.bdgenomics.adam.rdd.ADAMContext._
 import org.bdgenomics.adam.rdd.ADAMSaveAnyArgs
@@ -40,10 +41,10 @@ object Blastn extends BDGCommandCompanion {
  */
 class BlastnArgs extends BlastnFnArgs with ADAMSaveAnyArgs with ParquetArgs {
   @Argument(required = true, metaVar = "INPUT", usage = "Location to pipe DNA sequences from (e.g. FASTA format, .fa). If extension is not detected, Parquet is assumed.", index = 0)
-  var inputPath: String = null
+  var inputPath: String = _
 
   @Argument(required = true, metaVar = "OUTPUT", usage = "Location to pipe alignments to (e.g. .bam, .cram, .sam). If extension is not detected, Parquet is assumed.", index = 1)
-  var outputPath: String = null
+  var outputPath: String = _
 
   @Args4jOption(required = false, name = "-single", usage = "Saves OUTPUT as single file.")
   var asSingleFile: Boolean = false
@@ -66,6 +67,11 @@ class Blastn(protected val args: BlastnArgs) extends BDGSparkCommand[BlastnArgs]
   val stringency: ValidationStringency = ValidationStringency.valueOf(args.stringency)
 
   def run(sc: SparkContext) {
+    val fs = FileSystem.get(sc.hadoopConfiguration)
+    if (fs.exists(new Path(args.outputPath))) {
+      throw new FileAlreadyExistsException(s"${args.outputPath} already exists on HDFS")
+    }
+
     val sequences = sc.loadDnaSequences(args.inputPath)
     val alignments = new BlastnFn(args, sc).apply(sequences)
     alignments.save(args)
