@@ -33,6 +33,8 @@ object Cannoli {
     BcftoolsNorm,
     BedtoolsIntersect,
     Blastn,
+    Blastp,
+    DeepVariant,
     Bowtie,
     Bowtie2,
     SingleEndBowtie2,
