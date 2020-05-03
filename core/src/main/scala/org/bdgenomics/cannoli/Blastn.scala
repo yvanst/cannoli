@@ -48,6 +48,7 @@ class Blastn(val args: BlastnArgs, sc: SparkContext)
       "docker",
       "run",
       "--rm",
+      "-i",
       "-v",
       s"${args.dbDir}:/blast/blastdb:ro",
       "ncbi/blast:2.10.0",
@@ -62,8 +63,7 @@ class Blastn(val args: BlastnArgs, sc: SparkContext)
     if (args.sudo) cmd.prepend("sudo")
 
     info(
-      "Piping %s to blastn with command: %s files: %s"
-        .format(sequences, cmd)
+      s"Piping ${sequences} to blastn with command: ${cmd}"
     )
 
     implicit val tFormatter = FASTAInFormatter
