@@ -60,10 +60,10 @@ class DeepVariantArgs extends Args4jBase {
 
   @Args4jOption(
     required = false,
-    name = "-useGPU",
-    usage = "use GPU or CPU to run deepvariant, default will use GPU"
+    name = "-use_gpu",
+    usage = "use GPU to run deepvariant, instead of using CPU"
   )
-  var useGPU: Boolean = true
+  var useGPU: Boolean = false
 
   @Args4jOption(
     required = true,

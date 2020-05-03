@@ -75,7 +75,7 @@ class DeepVariant(protected val args: DeepVariantArgs) extends BDGSparkCommand[D
 
     if (isVcfExt(args.outputPath)) {
       variantContexts.saveAsVcf(
-        args.inputPath,
+        args.outputPath,
         asSingleFile = args.asSingleFile,
         deferMerging = args.deferMerging,
         disableFastConcat = args.disableFastConcat,

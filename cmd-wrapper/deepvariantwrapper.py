@@ -11,6 +11,7 @@ import argparse
 
 
 work_dir = Path("/tmp/deepvariant/")
+work_dir.chmod(0o777)
 cpu_num = len(os.sched_getaffinity(0)) - 1
 work_dir.mkdir(exist_ok=True, parents=True)
 
@@ -50,7 +51,8 @@ deepvariant_args = shlex.split(args.deepvariant_args)
 logger.debug("deepvariant args is " + str(args.deepvariant_args))
 
 
-(work_dir / "result.vcf").unlink(missing_ok=True)
+if (work_dir / "result.vcf").exists():
+    (work_dir / "result.vcf").unlink()
 (work_dir / "partition.bam").write_bytes(sys.stdin.buffer.read())
 logger.info("partition.bam is created")
 
@@ -58,6 +60,7 @@ samtools_cmd = [
     "docker",
     "run",
     "--rm",
+    "-i",
     "-v",
     f"{str(work_dir)}:/data",
     "biocontainers/samtools:v1.9-4-deb_cv1",
@@ -81,7 +84,8 @@ except subprocess.CalledProcessError as e:
 logger.info("=" * 20 + "END SAMTOOLS" + "=" * 20)
 
 
-deepvariant_cmd = ["docker", "run", "--rm"]
+deepvariant_cmd = ["docker", "run", "--rm", "-i"]
+
 if use_gpu:
     deepvariant_cmd.append("--gpus")
     deepvariant_cmd.append("all")
