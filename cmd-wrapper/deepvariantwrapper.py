@@ -11,9 +11,9 @@ import argparse
 
 
 work_dir = Path("/tmp/deepvariant/")
-work_dir.chmod(0o777)
 cpu_num = len(os.sched_getaffinity(0)) - 1
 work_dir.mkdir(exist_ok=True, parents=True)
+work_dir.chmod(0o777)
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
