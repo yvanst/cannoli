@@ -41,6 +41,8 @@ class DeepVariant(
       files = Seq()
     )
 
+    variantContexts.rdd.count()
+
     val headerLines = accumulator.value.distinct
     variantContexts.replaceHeaderLines(headerLines)
 
