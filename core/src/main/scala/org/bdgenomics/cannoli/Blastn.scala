@@ -1,47 +1,45 @@
 /**
-  * Licensed to Big Data Genomics (BDG) under one
-  * or more contributor license agreements.  See the NOTICE file
-  * distributed with this work for additional information
-  * regarding copyright ownership.  The BDG licenses this file
-  * to you under the Apache License, Version 2.0 (the
-  * "License"); you may not use this file except in compliance
-  * with the License.  You may obtain a copy of the License at
-  *
-  *     http://www.apache.org/licenses/LICENSE-2.0
-  *
-  * Unless required by applicable law or agreed to in writing, software
-  * distributed under the License is distributed on an "AS IS" BASIS,
-  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  * See the License for the specific language governing permissions and
-  * limitations under the License.
-  */
+ * Licensed to Big Data Genomics (BDG) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The BDG licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.bdgenomics.cannoli
-
-import java.io.FileNotFoundException
 
 import htsjdk.samtools.ValidationStringency
 import org.apache.spark.SparkContext
 import org.bdgenomics.adam.rdd.ADAMContext._
-import org.bdgenomics.adam.rdd.read.{AlignmentDataset, AnySAMOutFormatter}
-import org.bdgenomics.adam.rdd.sequence.{FASTAInFormatter, SequenceDataset}
-import org.bdgenomics.adam.sql.{Alignment => AlignmentProduct}
-import org.bdgenomics.cannoli.builder.CommandBuilders
+import org.bdgenomics.adam.rdd.read.{ AlignmentDataset, AnySAMOutFormatter }
+import org.bdgenomics.adam.rdd.sequence.{ FASTAInFormatter, SequenceDataset }
+import org.bdgenomics.adam.sql.{ Alignment => AlignmentProduct }
 import org.bdgenomics.formats.avro.Alignment
 import org.bdgenomics.utils.cli._
-import org.kohsuke.args4j.{Option => Args4jOption}
+import org.kohsuke.args4j.{ Option => Args4jOption }
 
-import scala.collection.JavaConversions._
 import scala.collection.mutable.ListBuffer
 
 /**
-  * Blastn wrapper as a function SequenceDataset &rarr; AlignmentDataset,
-  * for use in cannoli-shell or notebooks.
-  *
-  * @param args Blastn function arguments.
-  * @param sc Spark context.
-  */
-class Blastn(val args: BlastnArgs, sc: SparkContext)
-    extends CannoliFn[SequenceDataset, AlignmentDataset](sc) {
+ * Blastn wrapper as a function SequenceDataset &rarr; AlignmentDataset,
+ * for use in cannoli-shell or notebooks.
+ *
+ * @param args Blastn function arguments.
+ * @param sc Spark context.
+ */
+class Blastn(
+    val args: BlastnArgs,
+    val stringency: ValidationStringency = ValidationStringency.STRICT,
+    sc: SparkContext) extends CannoliFn[SequenceDataset, AlignmentDataset](sc) {
 
   override def apply(sequences: SequenceDataset): AlignmentDataset = {
     val cmd = ListBuffer(
@@ -79,24 +77,25 @@ class Blastn(val args: BlastnArgs, sc: SparkContext)
 }
 
 /**
-  * Blastn function arguments.
-  */
+ * Blastn function arguments.
+ */
 class BlastnArgs extends Args4jBase {
-  @Args4jOption(required = false, name = "-sudo", usage = "Run via sudo.")
+  @Args4jOption(required = false, name = "-sudo", usage = "Run docker via sudo.")
   var sudo: Boolean = false
-  @Args4jOption(
-    required = true,
-    name = "-db_name",
-    usage = "BLAST database name."
-  )
-  var dbName: String = _
 
   @Args4jOption(
     required = true,
     name = "-db_dir",
-    usage = "BLAST database name."
+    usage = "the directory where databases reside, should exist on local disk"
   )
   var dbDir: String = _
+
+  @Args4jOption(
+    required = true,
+    name = "-db_name",
+    usage = "blast -db {}, the database name, should exist on local disk"
+  )
+  var dbName: String = _
 
   @Args4jOption(
     required = false,
