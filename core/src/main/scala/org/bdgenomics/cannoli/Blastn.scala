@@ -38,7 +38,6 @@ import scala.collection.mutable.ListBuffer
  */
 class Blastn(
     val args: BlastnArgs,
-    val stringency: ValidationStringency = ValidationStringency.STRICT,
     sc: SparkContext) extends CannoliFn[SequenceDataset, AlignmentDataset](sc) {
 
   override def apply(sequences: SequenceDataset): AlignmentDataset = {
