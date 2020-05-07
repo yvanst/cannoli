@@ -40,10 +40,10 @@ object Bowtie2 extends BDGCommandCompanion {
  */
 class Bowtie2Args extends Bowtie2FnArgs with ADAMSaveAnyArgs with ParquetArgs {
   @Argument(required = true, metaVar = "INPUT", usage = "Location to pipe fragments from (e.g. interleaved FASTQ format, .ifq). If extension is not detected, Parquet is assumed.", index = 0)
-  var inputPath: String = null
+  var inputPath: String = _
 
   @Argument(required = true, metaVar = "OUTPUT", usage = "Location to pipe alignments to (e.g. .bam, .cram, .sam). If extension is not detected, Parquet is assumed.", index = 1)
-  var outputPath: String = null
+  var outputPath: String = _
 
   @Args4jOption(required = false, name = "-single", usage = "Saves OUTPUT as single file.")
   var asSingleFile: Boolean = false
