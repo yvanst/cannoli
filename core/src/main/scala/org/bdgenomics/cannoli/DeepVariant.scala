@@ -34,6 +34,7 @@ class DeepVariant(
     val variantContexts = alignments.pipe[VariantContext, VariantContextProduct, VariantContextDataset, BAMInFormatter](
       cmd = Seq(
         args.executable,
+        if (args.sudo) "true" else "false",
         if (args.useGPU) "true" else "false",
         args.refDir,
         deepvariant_arg
@@ -51,6 +52,12 @@ class DeepVariant(
 }
 
 class DeepVariantArgs extends Args4jBase {
+  @Args4jOption(
+    required = false,
+    name = "-sudo",
+    usage = "Run docker via sudo."
+  )
+  var sudo: Boolean = false
 
   @Args4jOption(
     required = false,
@@ -70,14 +77,16 @@ class DeepVariantArgs extends Args4jBase {
   @Args4jOption(
     required = true,
     name = "-ref_dir",
-    usage = "run_deepvariant --ref={}, the directory part, should exist on local disk"
+    usage =
+      "run_deepvariant --ref={}, the directory part, should exist on local disk"
   )
   var refDir: String = _
 
   @Args4jOption(
     required = true,
     name = "-ref_name",
-    usage = "run_deepvariant --ref={}, the name part, should exist on local disk"
+    usage =
+      "run_deepvariant --ref={}, the name part, should exist on local disk"
   )
   var refName: String = _
 

@@ -18,8 +18,8 @@ work_dir.chmod(0o777)
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 log_formatter = logging.Formatter("%(asctime)s %(levelname)s %(message)s")
-log_handler = logging.FileHandler(work_dir / "deepvariant.log", "a", "utf_8")
-log_handler.setLevel(logging.INFO)
+log_handler = logging.FileHandler(work_dir / "deepvariant.log", "w", "utf_8")
+log_handler.setLevel(logging.DEBUG)
 log_handler.setFormatter(log_formatter)
 logger.addHandler(log_handler)
 
@@ -27,6 +27,9 @@ logger.info("=" * 20 + "START PROGRAM" + "=" * 20)
 
 parser = argparse.ArgumentParser(
     description="deepvariant wrapper, receive reads from stdin, pipe output_vcf to stdout"
+)
+parser.add_argument(
+    "sudo", type=str, help="run docker via sudo, true or false",
 )
 parser.add_argument(
     "use_gpu",
@@ -46,7 +49,7 @@ parser.add_argument(
     help='other arguments that needed to run deepvariant, should be quoted as one, e.g. "--ref=/refDir/refName ..." ',
 )
 args = parser.parse_args()
-use_gpu = True if args.use_gpu.upper() != "FALSE" else False
+use_gpu = True if args.use_gpu.upper() == "TRUE" else False
 deepvariant_args = shlex.split(args.deepvariant_args)
 logger.debug("deepvariant args is " + str(args.deepvariant_args))
 
@@ -71,6 +74,8 @@ samtools_cmd = [
     f"{cpu_num}",
     "/data/partition.bam",
 ]
+if args.sudo.upper() == "TRUE":
+    samtools_cmd.insert(0, "sudo")
 logger.debug(" ".join(samtools_cmd))
 
 logger.info("=" * 20 + "START SAMTOOLS" + "=" * 20)
@@ -102,6 +107,8 @@ deepvariant_cmd += [
     "--output_vcf=/output/result.vcf",
     *deepvariant_args,
 ]
+if args.sudo.upper() == "TRUE":
+    deepvariant_cmd.insert(0, "sudo")
 logger.debug(" ".join(deepvariant_cmd))
 
 logger.info("=" * 20 + "START DEEPVARIANT" + "=" * 20)
