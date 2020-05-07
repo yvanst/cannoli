@@ -21,16 +21,13 @@ import java.io.FileNotFoundException
 
 import org.apache.spark.SparkContext
 import org.bdgenomics.adam.rdd.ADAMContext._
-import org.bdgenomics.adam.rdd.fragment.{
-  FragmentDataset,
-  InterleavedFASTQInFormatter
-}
-import org.bdgenomics.adam.rdd.read.{ AlignmentDataset, AnySAMOutFormatter }
-import org.bdgenomics.adam.sql.{ Alignment => AlignmentProduct }
+import org.bdgenomics.adam.rdd.fragment.{FragmentDataset, InterleavedFASTQInFormatter}
+import org.bdgenomics.adam.rdd.read.{AlignmentDataset, AnySAMOutFormatter}
+import org.bdgenomics.adam.sql.{Alignment => AlignmentProduct}
 import org.bdgenomics.cannoli.builder.CommandBuilders
 import org.bdgenomics.formats.avro.Alignment
 import org.bdgenomics.utils.cli._
-import org.kohsuke.args4j.{ Option => Args4jOption }
+import org.kohsuke.args4j.{Option => Args4jOption}
 
 import scala.collection.JavaConversions._
 import scala.collection.mutable.ListBuffer
@@ -54,27 +51,22 @@ class Bowtie2(val args: Bowtie2Args, sc: SparkContext)
       "-v",
       s"${args.indexDir}:/bowtie2/index:ro",
       "--env",
-      s"BOWTIE2_INDEXES=${args.indexDir}",
-      "quay.io/biocontainers/bowtie2:2.3.5.1--py37he513fc3_0",
+      s"BOWTIE2_INDEXES=/bowtie2/index",
+      "biocontainers/bowtie2:v2.3.4.3-1-deb_cv2",
+      "bowtie2",
       "-x",
-      s"${args.indexName}",
-      "--interleaved",
-      "-"
-    ) ++ args.otherArgs.split(" ")
+      s"${args.indexName}") ++ args.otherArgs.split(" ") ++ List("--interleaved", "-")
 
     if (args.sudo) cmd.prepend("sudo")
 
-    info(
-      s"Piping ${fragments} to blastn with command: ${cmd}"
-    )
+    info(s"Piping ${fragments} to bowtie2 with command: ${cmd}")
 
     implicit val tFormatter = InterleavedFASTQInFormatter
     implicit val uFormatter = new AnySAMOutFormatter
 
     fragments.pipe[Alignment, AlignmentProduct, AlignmentDataset, InterleavedFASTQInFormatter](
       cmd = cmd,
-      files = Seq()
-    )
+      files = Seq())
   }
 }
 
@@ -88,15 +80,13 @@ class Bowtie2Args extends Args4jBase {
   @Args4jOption(
     required = true,
     name = "-index_dir",
-    usage = "the directory where indexes reside, should exist on local disk"
-  )
+    usage = "the directory where indexes reside, should exist on local disk")
   var indexDir: String = _
 
   @Args4jOption(
     required = true,
     name = "-index_name",
-    usage = "bowtie2 -x {}, the index name, should exist on local disk"
-  )
+    usage = "bowtie2 -x {}, the index name, should exist on local disk")
   var indexName: String = _
 
   @Args4jOption(
@@ -104,7 +94,6 @@ class Bowtie2Args extends Args4jBase {
     name = "-other_args",
     usage =
       "other arguments for Bowtie2, must be double-quoted," +
-        " e.g. -bowtie2_args \"-N 1 --end-to-end\""
-  )
+        " e.g. -bowtie2_args \"-N 1 --end-to-end\"")
   var otherArgs: String = _
 }
