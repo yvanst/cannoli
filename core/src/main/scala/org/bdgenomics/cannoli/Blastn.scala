@@ -20,12 +20,12 @@ package org.bdgenomics.cannoli
 import htsjdk.samtools.ValidationStringency
 import org.apache.spark.SparkContext
 import org.bdgenomics.adam.rdd.ADAMContext._
-import org.bdgenomics.adam.rdd.read.{ AlignmentDataset, AnySAMOutFormatter }
-import org.bdgenomics.adam.rdd.sequence.{ FASTAInFormatter, SequenceDataset }
-import org.bdgenomics.adam.sql.{ Alignment => AlignmentProduct }
+import org.bdgenomics.adam.rdd.read.{AlignmentDataset, AnySAMOutFormatter}
+import org.bdgenomics.adam.rdd.sequence.{FASTAInFormatter, SequenceDataset}
+import org.bdgenomics.adam.sql.{Alignment => AlignmentProduct}
 import org.bdgenomics.formats.avro.Alignment
 import org.bdgenomics.utils.cli._
-import org.kohsuke.args4j.{ Option => Args4jOption }
+import org.kohsuke.args4j.{Option => Args4jOption}
 
 import scala.collection.mutable.ListBuffer
 
@@ -36,9 +36,8 @@ import scala.collection.mutable.ListBuffer
  * @param args Blastn function arguments.
  * @param sc Spark context.
  */
-class Blastn(
-    val args: BlastnArgs,
-    sc: SparkContext) extends CannoliFn[SequenceDataset, AlignmentDataset](sc) {
+class Blastn(val args: BlastnArgs, sc: SparkContext)
+    extends CannoliFn[SequenceDataset, AlignmentDataset](sc) {
 
   override def apply(sequences: SequenceDataset): AlignmentDataset = {
     val cmd = ListBuffer(
@@ -53,25 +52,20 @@ class Blastn(
       "-db",
       s"${args.dbName}",
       "-outfmt",
-      "17 SR SQ"
-    ) ++ args.otherArgs.split(" ")
+      "17 SR SQ") ++ args.otherArgs.split(" ")
 
     if (args.sudo) cmd.prepend("sudo")
 
-    info(
-      s"Piping ${sequences} to blastn with command: ${cmd}"
-    )
+    info(s"Piping ${sequences} to blastn with command: ${cmd}")
 
     implicit val tFormatter = FASTAInFormatter
     implicit val uFormatter = new AnySAMOutFormatter(
-      ValidationStringency.valueOf(args.stringency)
-    )
+      ValidationStringency.valueOf(args.stringency))
 
     sequences
       .pipe[Alignment, AlignmentProduct, AlignmentDataset, FASTAInFormatter](
         cmd = cmd,
-        files = Seq()
-      )
+        files = Seq())
   }
 }
 
@@ -85,15 +79,13 @@ class BlastnArgs extends Args4jBase {
   @Args4jOption(
     required = true,
     name = "-db_dir",
-    usage = "the directory where databases reside, should exist on local disk"
-  )
+    usage = "the directory where databases reside, should exist on local disk")
   var dbDir: String = _
 
   @Args4jOption(
     required = true,
     name = "-db_name",
-    usage = "blast -db {}, the database name, should exist on local disk"
-  )
+    usage = "blast -db {}, the database name, should exist on local disk")
   var dbName: String = _
 
   @Args4jOption(
@@ -101,15 +93,14 @@ class BlastnArgs extends Args4jBase {
     name = "-other_args",
     usage =
       "other arguments for Blast, must be double-quoted. " +
-        "e.g. -additional_args \"-num_threads 2 ...\""
-  )
+        "e.g. -additional_args \"-num_threads 2 ...\". " +
+        "notice -outfmt 17 SR SQ has been provided")
   var otherArgs: String = _
 
   @Args4jOption(
     required = false,
     name = "-stringency",
     usage =
-      "Stringency level for various checks; can be SILENT, LENIENT, or STRICT. Defaults to STRICT."
-  )
+      "Stringency level for various checks; can be SILENT, LENIENT, or STRICT. Defaults to STRICT.")
   var stringency: String = "STRICT"
 }
