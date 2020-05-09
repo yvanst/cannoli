@@ -20,12 +20,12 @@ package org.bdgenomics.cannoli
 import htsjdk.samtools.ValidationStringency
 import org.apache.spark.SparkContext
 import org.bdgenomics.adam.rdd.ADAMContext._
-import org.bdgenomics.adam.rdd.read.{AlignmentDataset, AnySAMOutFormatter}
-import org.bdgenomics.adam.rdd.sequence.{FASTAInFormatter, SequenceDataset}
-import org.bdgenomics.adam.sql.{Alignment => AlignmentProduct}
+import org.bdgenomics.adam.rdd.read.{ AlignmentDataset, AnySAMOutFormatter }
+import org.bdgenomics.adam.rdd.sequence.{ FASTAInFormatter, SequenceDataset }
+import org.bdgenomics.adam.sql.{ Alignment => AlignmentProduct }
 import org.bdgenomics.formats.avro.Alignment
 import org.bdgenomics.utils.cli._
-import org.kohsuke.args4j.{Option => Args4jOption}
+import org.kohsuke.args4j.{ Option => Args4jOption }
 
 import scala.collection.mutable.ListBuffer
 
@@ -93,8 +93,8 @@ class BlastnArgs extends Args4jBase {
     name = "-other_args",
     usage =
       "other arguments for Blast, must be double-quoted. " +
-        "e.g. -additional_args \"-num_threads 2 ...\". " +
-        "notice -outfmt 17 SR SQ has been provided")
+        "e.g. -additional_args \"-num_threads 2 ...\". notice -outfmt 17 SR SQ has been provided"
+  )
   var otherArgs: String = _
 
   @Args4jOption(
