@@ -21,13 +21,13 @@ import java.io.FileNotFoundException
 
 import org.apache.spark.SparkContext
 import org.bdgenomics.adam.rdd.ADAMContext._
-import org.bdgenomics.adam.rdd.fragment.{FragmentDataset, InterleavedFASTQInFormatter}
-import org.bdgenomics.adam.rdd.read.{AlignmentDataset, AnySAMOutFormatter}
-import org.bdgenomics.adam.sql.{Alignment => AlignmentProduct}
+import org.bdgenomics.adam.rdd.fragment.{ FragmentDataset, InterleavedFASTQInFormatter }
+import org.bdgenomics.adam.rdd.read.{ AlignmentDataset, AnySAMOutFormatter }
+import org.bdgenomics.adam.sql.{ Alignment => AlignmentProduct }
 import org.bdgenomics.cannoli.builder.CommandBuilders
 import org.bdgenomics.formats.avro.Alignment
 import org.bdgenomics.utils.cli._
-import org.kohsuke.args4j.{Option => Args4jOption}
+import org.kohsuke.args4j.{ Option => Args4jOption }
 
 import scala.collection.JavaConversions._
 import scala.collection.mutable.ListBuffer
