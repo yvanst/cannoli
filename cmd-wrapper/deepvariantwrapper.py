@@ -10,18 +10,19 @@ import logging
 import argparse
 
 
-work_dir = Path("/tmp/deepvariant/")
+work_dir = Path(f"/tmp/deepvariant_{os.getpid()}")
 cpu_num = len(os.sched_getaffinity(0)) - 1
-work_dir.mkdir(exist_ok=True, parents=True)
+work_dir.mkdir(parents=True, exist_ok=True)
 work_dir.chmod(0o777)
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 log_formatter = logging.Formatter("%(asctime)s %(levelname)s %(message)s")
-log_handler = logging.FileHandler(work_dir / "deepvariant.log", "w", "utf_8")
-log_handler.setLevel(logging.DEBUG)
-log_handler.setFormatter(log_formatter)
-logger.addHandler(log_handler)
+
+stderr_handler = logging.StreamHandler(sys.stderr)
+stderr_handler.setLevel(logging.DEBUG)
+stderr_handler.setFormatter(log_formatter)
+logger.addHandler(stderr_handler)
 
 logger.info("=" * 20 + "START PROGRAM" + "=" * 20)
 
@@ -81,7 +82,10 @@ logger.debug(" ".join(samtools_cmd))
 logger.info("=" * 20 + "START SAMTOOLS" + "=" * 20)
 try:
     complete_process = subprocess.run(
-        samtools_cmd, stdout=log_handler.stream, stderr=subprocess.STDOUT, check=True,
+        samtools_cmd,
+        stdout=stderr_handler.stream,
+        stderr=subprocess.STDOUT,
+        check=True,
     )
 except subprocess.CalledProcessError as e:
     logger.exception("samtools error \n")
@@ -115,7 +119,7 @@ logger.info("=" * 20 + "START DEEPVARIANT" + "=" * 20)
 try:
     complete_process = subprocess.run(
         deepvariant_cmd,
-        stdout=log_handler.stream,
+        stdout=stderr_handler.stream,
         stderr=subprocess.STDOUT,
         check=True,
     )
