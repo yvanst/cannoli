@@ -46,6 +46,9 @@ class DeepVariantArgs extends DeepVariantFnArgs with ADAMSaveAnyArgs with Parque
   @Argument(required = true, metaVar = "OUTPUT", usage = "Location to pipe variant contexts to (e.g. .vcf, .vcf.gz, .vcf.bgz). If extension is not detected, Parquet is assumed.", index = 1)
   var outputPath: String = _
 
+  @Args4jOption(required = false, name = "-repartition", usage = "repartition the input file.")
+  var repartition: Int = 500
+
   @Args4jOption(required = false, name = "-single", usage = "Saves OUTPUT as single file.")
   var asSingleFile: Boolean = false
 
@@ -70,7 +73,7 @@ class DeepVariant(protected val args: DeepVariantArgs) extends BDGSparkCommand[D
   val stringency: ValidationStringency = ValidationStringency.valueOf(args.stringency)
 
   def run(sc: SparkContext) {
-    val alignments = sc.loadAlignments(args.inputPath, stringency = stringency)
+    val alignments = sc.loadAlignments(args.inputPath, stringency = stringency).transform(rdd => rdd.repartition(args.repartition))
     val variantContexts = new DeepVariantFn(args, stringency, sc).apply(alignments)
 
     if (isVcfExt(args.outputPath)) {

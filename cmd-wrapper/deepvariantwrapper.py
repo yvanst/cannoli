@@ -59,6 +59,9 @@ if (work_dir / "result.vcf").exists():
     (work_dir / "result.vcf").unlink()
 (work_dir / "partition.bam").write_bytes(sys.stdin.buffer.read())
 logger.info("partition.bam is created")
+logger.info(
+    f"partition size: {(work_dir / 'partition.bam').stat().st_size / (2**20)} MB"
+)
 
 samtools_cmd = [
     "docker",
