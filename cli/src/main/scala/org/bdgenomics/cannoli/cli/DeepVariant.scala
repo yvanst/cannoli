@@ -19,6 +19,7 @@ package org.bdgenomics.cannoli.cli
 
 import grizzled.slf4j.Logging
 import htsjdk.samtools.ValidationStringency
+import org.apache.hadoop.fs.{ FileAlreadyExistsException, FileSystem, Path }
 import org.apache.spark.SparkContext
 import org.bdgenomics.adam.rdd.ADAMContext._
 import org.bdgenomics.adam.rdd.ADAMSaveAnyArgs
@@ -73,6 +74,11 @@ class DeepVariant(protected val args: DeepVariantArgs) extends BDGSparkCommand[D
   val stringency: ValidationStringency = ValidationStringency.valueOf(args.stringency)
 
   def run(sc: SparkContext) {
+    val fs = FileSystem.get(sc.hadoopConfiguration)
+    if (fs.exists(new Path(args.outputPath))) {
+      throw new FileAlreadyExistsException(s"${args.outputPath} already exists on HDFS")
+    }
+
     val alignments = sc.loadAlignments(args.inputPath, stringency = stringency).transform(rdd => rdd.repartition(args.repartition))
     val variantContexts = new DeepVariantFn(args, stringency, sc).apply(alignments)
 

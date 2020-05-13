@@ -19,6 +19,7 @@ package org.bdgenomics.cannoli.cli
 
 import grizzled.slf4j.Logging
 import htsjdk.samtools.ValidationStringency
+import org.apache.hadoop.fs.{ FileAlreadyExistsException, FileSystem, Path }
 import org.apache.spark.SparkContext
 import org.bdgenomics.adam.rdd.ADAMContext._
 import org.bdgenomics.adam.rdd.ADAMSaveAnyArgs
@@ -69,6 +70,11 @@ class Bowtie2(protected val args: Bowtie2Args) extends BDGSparkCommand[Bowtie2Ar
   val stringency: ValidationStringency = ValidationStringency.valueOf(args.stringency)
 
   def run(sc: SparkContext) {
+    val fs = FileSystem.get(sc.hadoopConfiguration)
+    if (fs.exists(new Path(args.outputPath))) {
+      throw new FileAlreadyExistsException(s"${args.outputPath} already exists on HDFS")
+    }
+
     val fragments = sc.loadFragments(args.inputPath, stringency = stringency)
     val alignments = new Bowtie2Fn(args, sc).apply(fragments)
     alignments.save(args)

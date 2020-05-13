@@ -19,6 +19,7 @@ package org.bdgenomics.cannoli.cli
 
 import grizzled.slf4j.Logging
 import htsjdk.samtools.ValidationStringency
+import org.apache.hadoop.fs.{ FileAlreadyExistsException, FileSystem, Path }
 import org.apache.spark.SparkContext
 import org.bdgenomics.adam.rdd.ADAMContext._
 import org.bdgenomics.adam.rdd.ADAMSaveAnyArgs
@@ -66,6 +67,11 @@ class Blastn(protected val args: BlastnArgs) extends BDGSparkCommand[BlastnArgs]
   val stringency: ValidationStringency = ValidationStringency.valueOf(args.stringency)
 
   def run(sc: SparkContext) {
+    val fs = FileSystem.get(sc.hadoopConfiguration)
+    if (fs.exists(new Path(args.outputPath))) {
+      throw new FileAlreadyExistsException(s"${args.outputPath} already exists on HDFS")
+    }
+
     val sequences = sc.loadDnaSequences(args.inputPath)
     val alignments = new BlastnFn(args, sc).apply(sequences)
     alignments.save(args)
