@@ -40,9 +40,8 @@ class DeepVariant(
         deepvariant_arg
       ),
       files = Seq()
-    )
+    ).cache()
 
-    variantContexts.cache()
     variantContexts.rdd.count()
 
     val headerLines = accumulator.value.distinct
